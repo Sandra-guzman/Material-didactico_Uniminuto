@@ -1,0 +1,521 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="Reto Euclides: juego de comprobación de saberes de Geometría (sistemas deductivos, construcciones y congruencia).">
+<title>Reto Euclides</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Atkinson+Hyperlegible:wght@400;700&display=swap">
+<style>
+html, body { margin: 0; }
+[hidden] { display: none !important; }
+img { max-width: 100%; }
+/* Layout: one centered game card (max 760px) over faint compass circles; each task type renders inside it. */
+:root {
+  --bg: #F3F5FA; --paper: #FFFFFF; --ink: #1A2238; --muted: #5A6480; --line: #D9DFEC;
+  --navy: #23325B; --gold: #F5A415; --gold-ink: #8A5300; --soft: #EAEEF7; --sel: #FFF1D6;
+  --ok: #1E7A3C; --ok-bg: #E4F3E8; --bad: #B3261E; --bad-bg: #FBE7E5;
+  --fig-fill: #E6EBF6; --fig-stroke: #23325B; --mark: #C62828; --a1: #E09000; --a2: #1B7F8C; --a3: #2E7D32; --grid: #D5DCEB;
+  --btn: #23325B; --btn-ink: #FFFFFF;
+  --display: "Bricolage Grotesque", "Trebuchet MS", system-ui, sans-serif;
+  --body: "Atkinson Hyperlegible", "Segoe UI", system-ui, sans-serif;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #0F1424; --paper: #182038; --ink: #EEF1F8; --muted: #A6AFC8; --line: #2C3654;
+  --navy: #9DB0E8; --gold: #F5B23A; --gold-ink: #F7C565; --soft: #222B47; --sel: #3A3220;
+  --ok: #7FD39A; --ok-bg: #173826; --bad: #FF9C93; --bad-bg: #42201E;
+  --fig-fill: #26304F; --fig-stroke: #C9D4F2; --mark: #FF8A80; --a1: #F5B23A; --a2: #5CC6D3; --a3: #7FD39A; --grid: #2E3858; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #0F1424; --paper: #182038; --ink: #EEF1F8; --muted: #A6AFC8; --line: #2C3654;
+  --navy: #9DB0E8; --gold: #F5B23A; --gold-ink: #F7C565; --soft: #222B47; --sel: #3A3220;
+  --ok: #7FD39A; --ok-bg: #173826; --bad: #FF9C93; --bad-bg: #42201E;
+  --fig-fill: #26304F; --fig-stroke: #C9D4F2; --mark: #FF8A80; --a1: #F5B23A; --a2: #5CC6D3; --a3: #7FD39A; --grid: #2E3858; color-scheme: dark }
+
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--ink); font: 17px/1.5 var(--body); min-height: 100%;
+  background-image: radial-gradient(circle at 12% 8%, transparent 0 140px, var(--line) 141px, transparent 142px),
+                    radial-gradient(circle at 92% 96%, transparent 0 220px, var(--line) 221px, transparent 222px); }
+.wrap { max-width: 760px; margin: 0 auto; padding-block: 28px 40px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+.card { background: var(--paper); border: 1px solid var(--line); border-radius: 18px; padding: clamp(16px, 4vw, 30px);
+  box-shadow: 0 10px 30px -18px rgba(20, 30, 60, .35); }
+h1, h2 { font-family: var(--display); text-wrap: balance; margin: 0; color: var(--ink); }
+h1 { font-size: clamp(34px, 7vw, 52px); line-height: 1.02; letter-spacing: -.02em; font-weight: 800; }
+h2 { font-size: clamp(20px, 4.2vw, 26px); line-height: 1.22; font-weight: 600; }
+.eyebrow { font: 700 13px/1 var(--body); letter-spacing: .12em; text-transform: uppercase; color: var(--gold-ink); }
+p { margin: 0; }
+.muted { color: var(--muted); }
+.hint { font-size: 15px; color: var(--muted); }
+.stack { display: flex; flex-direction: column; gap: 16px; }
+.row { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
+
+.rounds { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.round { background: var(--soft); border-radius: 12px; padding: 12px 14px; min-width: 0; }
+.round b { display: block; font-family: var(--display); font-size: 16px; color: var(--navy); }
+.round span { font-size: 14px; color: var(--muted); }
+@media (max-width: 520px) { .rounds { grid-template-columns: 1fr; } }
+
+label { font-weight: 700; font-size: 15px; }
+input[type=text] { width: 100%; font: 18px var(--body); padding: 12px 14px; border-radius: 10px; border: 1.5px solid var(--line); background: var(--bg); color: var(--ink); }
+input[type=text]:focus-visible { outline: 3px solid var(--gold); outline-offset: 1px; }
+.numrow { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.numrow input { width: 140px; font: 700 22px var(--display); text-align: center; }
+
+.btn { font: 700 17px var(--body); border: 0; border-radius: 12px; padding: 13px 22px; cursor: pointer; background: var(--btn); color: var(--btn-ink); transition: transform .08s ease; }
+.btn.gold { background: var(--gold); color: var(--btn); }
+.btn.ghost { background: transparent; color: var(--ink); border: 1.5px solid var(--line); }
+.btn[disabled] { opacity: .45; cursor: default; }
+.btn:active { transform: translateY(1px); }
+button:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
+
+.hud { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 12px; }
+.chip { font: 700 13px var(--body); letter-spacing: .06em; text-transform: uppercase; padding: 6px 10px; border-radius: 999px; background: var(--soft); color: var(--navy); }
+.type { font: 700 12px var(--body); letter-spacing: .08em; text-transform: uppercase; color: var(--gold-ink); }
+.score { font-family: var(--display); font-weight: 800; font-size: 22px; font-variant-numeric: tabular-nums; }
+.timer { height: 8px; background: var(--soft); border-radius: 99px; overflow: hidden; margin-bottom: 16px; }
+.timer i { display: block; height: 100%; width: 100%; background: var(--gold); border-radius: 99px; transition: width .25s linear; }
+.timer.low i { background: var(--bad); }
+.progress { display: flex; gap: 4px; margin-bottom: 12px; }
+.progress span { flex: 1; height: 5px; border-radius: 3px; background: var(--line); }
+.progress span.ok { background: var(--ok); } .progress span.half { background: var(--gold); opacity: .6 } .progress span.bad { background: var(--bad); } .progress span.now { background: var(--gold); }
+
+figure { margin: 0; background: var(--bg); border-radius: 12px; padding: 8px; }
+figure svg { display: block; width: 100%; height: auto; max-height: 260px; }
+svg text { font-family: var(--body); font-weight: 700; fill: var(--ink); }
+
+/* opción múltiple */
+.opts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+@media (max-width: 520px) { .opts { grid-template-columns: 1fr; } }
+.opt { text-align: left; font: 17px/1.35 var(--body); color: var(--ink); background: var(--paper); border: 1.5px solid var(--line);
+  border-radius: 12px; padding: 14px 14px 14px 50px; cursor: pointer; position: relative; min-height: 56px; min-width: 0; }
+.opt::before { content: attr(data-k); position: absolute; left: 12px; top: 50%; transform: translateY(-50%); width: 28px; height: 28px;
+  border-radius: 8px; display: grid; place-items: center; font: 700 14px var(--body); background: var(--soft); color: var(--navy); }
+.opt:hover:not([disabled]) { border-color: var(--navy); }
+.opt[disabled] { cursor: default; }
+.opt.right { border-color: var(--ok); background: var(--ok-bg); }
+.opt.right::before { background: var(--ok); color: var(--paper); content: "✓"; }
+.opt.wrong { border-color: var(--bad); background: var(--bad-bg); }
+.opt.wrong::before { background: var(--bad); color: var(--paper); content: "✗"; }
+
+/* clasificar */
+.pool { display: flex; flex-wrap: wrap; gap: 8px; min-height: 52px; padding: 10px; border: 1.5px dashed var(--line); border-radius: 12px; }
+.pool:empty::after { content: "Todas las tarjetas están ubicadas. Pulsa Comprobar."; color: var(--muted); font-size: 15px; align-self: center; }
+.item { font: 15px/1.3 var(--body); color: var(--ink); background: var(--paper); border: 1.5px solid var(--line); border-radius: 10px;
+  padding: 9px 12px; cursor: pointer; text-align: left; max-width: 100%; position: relative; }
+.item.fig { padding: 4px; width: 132px; }
+.item.fig svg { display: block; width: 100%; height: auto; }
+.item.sel { border-color: var(--gold); background: var(--sel); box-shadow: 0 0 0 2px var(--gold); }
+.item.ok { border-color: var(--ok); background: var(--ok-bg); }
+.item.bad { border-color: var(--bad); background: var(--bad-bg); }
+.item .fix { display: block; font-size: 12px; font-weight: 700; color: var(--bad); margin-top: 2px; }
+.bins { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; }
+.bin { background: var(--soft); border: 1.5px solid transparent; border-radius: 12px; padding: 10px; min-height: 92px; cursor: pointer;
+  display: flex; flex-direction: column; gap: 6px; text-align: left; font: inherit; color: var(--ink); min-width: 0; }
+.bin.ready { border-color: var(--gold); border-style: dashed; }
+.bin > b { font-family: var(--display); color: var(--navy); font-size: 15px; }
+.bin .slot { display: flex; flex-wrap: wrap; gap: 6px; }
+.bin .item { font-size: 14px; padding: 7px 9px; }
+.bin .item.fig { width: 104px; }
+
+/* selección de piezas */
+.tiles { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+@media (max-width: 520px) { .tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.tile { background: var(--paper); border: 1.5px solid var(--line); border-radius: 12px; padding: 6px; cursor: pointer; position: relative; min-width: 0; }
+.tile svg { display: block; width: 100%; height: auto; }
+.tile.on { border-color: var(--gold); background: var(--sel); box-shadow: 0 0 0 2px var(--gold); }
+.tile.ok { border-color: var(--ok); background: var(--ok-bg); } .tile.bad { border-color: var(--bad); background: var(--bad-bg); }
+.tile span { position: absolute; top: 6px; left: 8px; font: 700 13px var(--body); color: var(--muted); }
+.model { display: grid; grid-template-columns: minmax(0, 180px) minmax(0, 1fr); gap: 14px; align-items: center; }
+@media (max-width: 520px) { .model { grid-template-columns: minmax(0, 150px) minmax(0, 1fr); } }
+
+/* tocar en la figura */
+.tap svg { cursor: crosshair; touch-action: manipulation; }
+.part { cursor: pointer; }
+
+.feedback { border-radius: 12px; padding: 14px 16px; background: var(--soft); }
+.feedback b { font-family: var(--display); }
+.feedback.ok b { color: var(--ok); } .feedback.bad b { color: var(--bad); } .feedback.half b { color: var(--gold-ink); }
+
+.big { font-family: var(--display); font-weight: 800; font-size: clamp(56px, 14vw, 88px); line-height: 1; color: var(--navy); font-variant-numeric: tabular-nums; }
+.medal { display: inline-block; font: 700 15px var(--body); padding: 8px 14px; border-radius: 999px; background: var(--gold); color: var(--btn); }
+.breakdown { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+@media (max-width: 520px) { .breakdown { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.breakdown div { background: var(--soft); border-radius: 12px; padding: 12px; text-align: center; min-width: 0; }
+.breakdown strong { display: block; font-family: var(--display); font-size: 24px; color: var(--navy); font-variant-numeric: tabular-nums; }
+.breakdown span { font-size: 13px; color: var(--muted); }
+.result-text { width: 100%; font: 15px/1.4 var(--body); padding: 12px; border-radius: 10px; border: 1.5px dashed var(--line); background: var(--bg); color: var(--ink); resize: none; }
+.review { display: flex; flex-direction: column; gap: 10px; }
+.review div { background: var(--bad-bg); border-radius: 10px; padding: 10px 12px; font-size: 15px; }
+.howto { font-size: 15px; background: var(--soft); border-radius: 12px; padding: 12px 14px; }
+footer { text-align: center; font-size: 13px; color: var(--muted); margin-top: 16px; }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+.pop { animation: pop .35s ease; } @keyframes pop { from { transform: scale(.98); opacity: .7 } to { transform: none; opacity: 1 } }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <main class="card" id="app" aria-live="polite"></main>
+  <footer>Geometría · Semanas 1 y 2 · Sistemas deductivos, construcciones y congruencia</footer>
+</div>
+
+<script>
+(() => {
+const ROUNDS = ["¿A qué pertenece?", "Reconoce la forma", "Completa la figura", "Congruencia y razonamiento"];
+const TYPE = { classify: "Clasifica", select: "Reconoce", point: "Completa la figura", part: "Completa la figura", number: "Completa el valor", mcq: "Elige la respuesta" };
+const SECS = { classify: 75, select: 45, point: 40, part: 30, number: 45, mcq: 30 };
+
+/* ---------- utilidades de dibujo ---------- */
+const S = (x) => Math.round(x * 10) / 10;
+const poly = (P, extra = "") => `<polygon points="${P.map(p => S(p[0]) + "," + S(p[1])).join(" ")}" fill="var(--fig-fill)" stroke="var(--fig-stroke)" stroke-width="2.6" stroke-linejoin="round" ${extra}/>`;
+const ln = (a, b, c = "var(--fig-stroke)", w = 2.4, dash = "") => `<line x1="${S(a[0])}" y1="${S(a[1])}" x2="${S(b[0])}" y2="${S(b[1])}" stroke="${c}" stroke-width="${w}" stroke-linecap="round" ${dash ? `stroke-dasharray="${dash}"` : ""}/>`;
+const dot = (p, c = "var(--fig-stroke)", r = 4) => `<circle cx="${S(p[0])}" cy="${S(p[1])}" r="${r}" fill="${c}"/>`;
+const lab = (p, t, dx = 0, dy = 0, size = 16, c = "var(--ink)") => `<text x="${S(p[0] + dx)}" y="${S(p[1] + dy)}" font-size="${size}" text-anchor="middle" dominant-baseline="middle" style="fill:${c}">${t}</text>`;
+const svg = (w, h, body, label) => `<svg viewBox="0 0 ${w} ${h}" role="img" aria-label="${label || "figura"}">${body}</svg>`;
+function arcPath(c, r, a1, a2, color = "var(--a1)", w = 2.4, dash = "") { // ángulos en grados (pantalla: 0 = derecha, 90 = abajo)
+  const p = a => [c[0] + r * Math.cos(a * Math.PI / 180), c[1] + r * Math.sin(a * Math.PI / 180)];
+  const s = p(a1), e = p(a2), large = Math.abs(a2 - a1) > 180 ? 1 : 0, sw = a2 > a1 ? 1 : 0;
+  return `<path d="M${S(s[0])} ${S(s[1])} A${r} ${r} 0 ${large} ${sw} ${S(e[0])} ${S(e[1])}" fill="none" stroke="${color}" stroke-width="${w}" ${dash ? `stroke-dasharray="${dash}"` : ""}/>`;
+}
+function ticks(a, b, n, len = 8) {
+  const m = [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2], L = Math.hypot(b[0] - a[0], b[1] - a[1]);
+  const d = [(b[0] - a[0]) / L, (b[1] - a[1]) / L], nr = [-d[1], d[0]]; let s = "";
+  for (let k = 0; k < n; k++) { const off = (k - (n - 1) / 2) * 6, p = [m[0] + d[0] * off, m[1] + d[1] * off];
+    s += ln([p[0] - nr[0] * len, p[1] - nr[1] * len], [p[0] + nr[0] * len, p[1] + nr[1] * len], "var(--mark)", 2.6); }
+  return s;
+}
+function arcs(V, P, Q, n, color, r0 = 17) {
+  const u = p => { const L = Math.hypot(p[0] - V[0], p[1] - V[1]); return [(p[0] - V[0]) / L, (p[1] - V[1]) / L]; };
+  const u1 = u(P), u2 = u(Q), sweep = (u1[0] * u2[1] - u1[1] * u2[0]) > 0 ? 1 : 0; let s = "";
+  for (let k = 0; k < n; k++) { const r = r0 + 5 * k;
+    s += `<path d="M${S(V[0] + u1[0] * r)} ${S(V[1] + u1[1] * r)} A${r} ${r} 0 0 ${sweep} ${S(V[0] + u2[0] * r)} ${S(V[1] + u2[1] * r)}" fill="none" stroke="${color}" stroke-width="2.6"/>`; }
+  return s;
+}
+function transform(P, flip, ang, s = 1) {
+  const c = P.reduce((a, p) => [a[0] + p[0] / P.length, a[1] + p[1] / P.length], [0, 0]); const t = ang * Math.PI / 180;
+  return P.map(([x, y]) => { let dx = (x - c[0]) * s, dy = (y - c[1]) * s; if (flip) dx = -dx;
+    return [dx * Math.cos(t) - dy * Math.sin(t), dx * Math.sin(t) + dy * Math.cos(t)]; });
+}
+function fit(P, x0, x1, y0, y1) {
+  const xs = P.map(p => p[0]), ys = P.map(p => p[1]);
+  const w = Math.max(...xs) - Math.min(...xs), h = Math.max(...ys) - Math.min(...ys), s = Math.min((x1 - x0) / w, (y1 - y0) / h);
+  const ox = x0 + ((x1 - x0) - w * s) / 2 - Math.min(...xs) * s, oy = y0 + ((y1 - y0) - h * s) / 2 - Math.min(...ys) * s;
+  return P.map(([x, y]) => [x * s + ox, y * s + oy]);
+}
+const center = (P, cx, cy) => P.map(([x, y]) => [x + cx, y + cy]);
+const BASE = [[0, 120], [150, 120], [50, 18]];
+const COLS = ["var(--a1)", "var(--a2)", "var(--a3)"];
+
+function pairSVG(m, label) {
+  const T1 = fit(transform(BASE, false, 0), 16, 184, 14, 146), T2 = fit(transform(BASE, true, 200), 216, 384, 14, 146); let b = "";
+  for (const T of [T1, T2]) { b += poly(T);
+    (m.sides || []).forEach(([i, n]) => b += ticks(T[i], T[(i + 1) % 3], n));
+    (m.angles || []).forEach(([v, n]) => b += arcs(T[v], T[(v + 1) % 3], T[(v + 2) % 3], n, COLS[v])); }
+  return svg(400, 160, b, label);
+}
+
+/* ---------- mini figuras de construcciones ---------- */
+const CONS = {
+  mediatriz: svg(160, 110, ln([30, 60], [130, 60]) + dot([30, 60]) + dot([130, 60]) + arcPath([30, 60], 62, -42, -22) + arcPath([130, 60], 62, 202, 222, "var(--a2)")
+    + arcPath([30, 60], 62, 22, 42) + arcPath([130, 60], 62, 138, 158, "var(--a2)") + ln([80, 8], [80, 104], "var(--mark)", 2.6), "mediatriz"),
+  bisectriz: svg(160, 110, ln([22, 96], [148, 96]) + ln([22, 96], [100, 12]) + arcPath([22, 96], 48, -47, 0) + ln([22, 96], [146, 40], "var(--mark)", 2.6)
+    + arcPath([86, 67], 18, -95, -40, "var(--a2)"), "bisectriz"),
+  perpendicular: svg(160, 110, ln([12, 85], [148, 85]) + dot([80, 22]) + arcPath([80, 22], 76, 30, 150) + ln([80, 10], [80, 104], "var(--mark)", 2.6)
+    + `<rect x="80" y="73" width="12" height="12" fill="none" stroke="var(--fig-stroke)" stroke-width="1.8"/>`, "perpendicular por un punto"),
+  paralela: svg(160, 110, ln([10, 85], [150, 85]) + ln([10, 30], [150, 30], "var(--mark)", 2.6) + ln([45, 106], [112, 6], "var(--muted)", 2)
+    + arcPath([59, 85], 20, -56, 0) + arcPath([96, 30], 20, -56, 0) + dot([96, 30]), "paralela por un punto"),
+  equilatero: svg(160, 110, arcPath([55, 82], 50, 180, 360, "var(--a1)", 1.8) + arcPath([105, 82], 50, 180, 360, "var(--a2)", 1.8)
+    + poly([[55, 82], [105, 82], [80, 38.7]]) + dot([55, 82]) + dot([105, 82]) + dot([80, 38.7], "var(--mark)"), "triángulo equilátero"),
+};
+
+function triKind(kind, ang, flip) {
+  const shapes = { equi: [[0, 90], [100, 90], [50, 3.4]], iso: [[0, 90], [80, 90], [40, -5]], esc: [[0, 90], [110, 90], [28, 25]] };
+  const T = fit(transform(shapes[kind], flip, ang), 12, 108, 10, 90);
+  const mk = { equi: [1, 1, 1], iso: [0, 1, 1], esc: [1, 2, 3] }[kind]; let b = poly(T);
+  mk.forEach((n, i) => { if (n) b += ticks(T[i], T[(i + 1) % 3], n, 7); });
+  return svg(120, 100, b, "triángulo con marcas en sus lados");
+}
+
+function tileTri(kind) { // misma escala absoluta para comparar tamaños
+  const shapes = {
+    rot: transform(BASE, false, 95, .72), refl: transform(BASE, true, 0, .72), rotrefl: transform(BASE, true, 210, .72),
+    small: transform(BASE, false, 30, .5), big: transform(BASE, false, -15, .95), other: transform([[0, 120], [150, 120], [120, 30]], false, 0, .72), model: transform(BASE, false, 0, .72)
+  };
+  return svg(200, 160, poly(center(shapes[kind], 100, 80)), "triángulo");
+}
+
+/* ---------- tareas ---------- */
+const TASKS = [
+  // RONDA 1
+  { r: 0, type: "classify", q: "Lleva cada enunciado a su categoría.", hint: "Toca una tarjeta y luego la categoría. Para moverla otra vez, tócala de nuevo.",
+    bins: ["Axioma", "Postulado", "Definición", "Teorema"],
+    items: [{ t: "El todo es mayor que la parte.", c: 0 }, { t: "Cosas iguales a una misma cosa son iguales entre sí.", c: 0 },
+      { t: "Por dos puntos distintos pasa una única recta.", c: 1 }, { t: "Con cualquier centro y radio se traza una circunferencia.", c: 1 },
+      { t: "Triángulo equilátero: tiene sus tres lados iguales.", c: 2 }, { t: "Los ángulos de un triángulo suman 180°.", c: 3 },
+      { t: "Los ángulos opuestos por el vértice son iguales.", c: 3 }],
+    e: "Axiomas: verdades generales. Postulados: supuestos de la geometría. Definiciones: dan nombre preciso. Teoremas: se demuestran." },
+  { r: 0, type: "classify", q: "¿A qué construcción pertenece cada trazo?", hint: "Toca una figura y luego su nombre.",
+    bins: ["Mediatriz", "Bisectriz", "Perpendicular por un punto", "Paralela por un punto", "Triángulo equilátero"], oneEach: true,
+    items: [{ f: CONS.mediatriz, c: 0 }, { f: CONS.bisectriz, c: 1 }, { f: CONS.perpendicular, c: 2 }, { f: CONS.paralela, c: 3 }, { f: CONS.equilatero, c: 4 }],
+    e: "Mediatriz: arcos iguales desde los extremos. Bisectriz: divide el ángulo. Perpendicular: arco desde P. Paralela: se copia el ángulo correspondiente. Equilátero: dos circunferencias de igual radio." },
+  // RONDA 2
+  { r: 1, type: "classify", q: "Reconoce cada triángulo por las marcas de sus lados.", hint: "Las rayitas iguales indican lados iguales.",
+    bins: ["Equilátero", "Isósceles", "Escaleno"],
+    items: [{ f: triKind("equi", 0), c: 0 }, { f: triKind("iso", 180, false), c: 1 }, { f: triKind("esc", 0), c: 2 },
+      { f: triKind("iso", 25, true), c: 1 }, { f: triKind("equi", 40), c: 0 }, { f: triKind("esc", 200, true), c: 2 }],
+    e: "Equilátero: tres lados iguales. Isósceles: al menos dos iguales. Escaleno: los tres distintos." },
+  { r: 1, type: "select", q: "Toca TODAS las piezas congruentes con el modelo.", hint: "Congruente: misma forma y mismo tamaño, aunque esté girada o volteada.",
+    model: tileTri("model"),
+    tiles: [{ f: tileTri("rot"), ok: true }, { f: tileTri("small"), ok: false }, { f: tileTri("refl"), ok: true },
+      { f: tileTri("other"), ok: false }, { f: tileTri("rotrefl"), ok: true }, { f: tileTri("big"), ok: false }],
+    e: "Las piezas giradas o volteadas son congruentes: los movimientos rígidos no cambian lados ni ángulos. Las ampliadas, reducidas o deformadas no lo son." },
+  // RONDA 3
+  { r: 2, type: "point", q: "Completa la construcción: toca el punto C para que el triángulo tenga lados AB, AC y BC dados.", hint: "C está donde se cortan los dos arcos.",
+    w: 400, h: 230, target: [219.4, 92.7], tol: 22,
+    draw: () => ln([80, 190], [320, 190]) + dot([80, 190]) + dot([320, 190]) + lab([80, 190], "A", -14, 14) + lab([320, 190], "B", 14, 14)
+      + arcPath([80, 190], 170, -58, -14) + arcPath([320, 190], 140, 192, 250, "var(--a2)")
+      + lab([110, 120], "AC", 0, 0, 13, "var(--a1)") + lab([300, 120], "BC", 0, 0, 13, "var(--a2)"),
+    reveal: () => poly([[80, 190], [320, 190], [219.4, 92.7]], 'fill-opacity="0.6"') + dot([219.4, 92.7], "var(--ok)", 6) + lab([219.4, 92.7], "C", 0, -18),
+    e: "El vértice C está a la distancia AC de A y a la distancia BC de B: es el corte de los dos arcos." },
+  { r: 2, type: "point", q: "Completa la reflexión: toca dónde va el vértice que falta del triángulo reflejado.", hint: "Cada punto queda a la misma distancia de la línea espejo, del otro lado.",
+    w: 330, h: 240, target: [270, 60], tol: 18, grid: true,
+    draw: () => { let g = ""; for (let i = 0; i <= 11; i++) g += ln([i * 30, 0], [i * 30, 240], "var(--grid)", 1); for (let j = 0; j <= 8; j++) g += ln([0, j * 30], [330, j * 30], "var(--grid)", 1);
+      return g + ln([165, 0], [165, 240], "var(--mark)", 2.4, "7 6") + poly([[30, 180], [120, 180], [60, 60]]) + ln([210, 180], [300, 180], "var(--fig-stroke)", 2.6)
+        + dot([210, 180]) + dot([300, 180]) + lab([200, 14], "espejo", 0, 0, 12, "var(--mark)"); },
+    reveal: () => poly([[300, 180], [210, 180], [270, 60]], 'fill-opacity="0.6"') + dot([270, 60], "var(--ok)", 6) + ln([60, 60], [270, 60], "var(--ok)", 1.5, "4 4"),
+    e: "El vértice de arriba está a 3,5 cuadros del espejo; su reflejo queda a 3,5 cuadros del otro lado y a la misma altura." },
+  { r: 2, type: "part", q: "Para que los triángulos sean congruentes por LAL, ¿qué lado de △DEF debes marcar? Tócalo.", hint: "En △ABC están marcados AB, AC y el ángulo A, que está entre esos dos lados.",
+    build: () => {
+      const T1 = fit(transform(BASE, false, 0), 20, 180, 22, 150), T2 = fit(transform(BASE, true, 200), 220, 380, 22, 150);
+      let b = poly(T1) + poly(T2) + ticks(T1[0], T1[1], 1) + ticks(T1[2], T1[0], 2) + arcs(T1[0], T1[1], T1[2], 1, COLS[0]) + ticks(T2[0], T2[1], 1) + arcs(T2[0], T2[1], T2[2], 1, COLS[0]);
+      const L1 = ["A", "B", "C"], L2 = ["D", "E", "F"];
+      [[T1, L1], [T2, L2]].forEach(([T, L]) => { const c = [(T[0][0] + T[1][0] + T[2][0]) / 3, (T[0][1] + T[1][1] + T[2][1]) / 3];
+        T.forEach((p, i) => { const d = [p[0] - c[0], p[1] - c[1]], n = Math.hypot(d[0], d[1]); b += lab(p, L[i], d[0] / n * 15, d[1] / n * 15, 15); }); });
+      const names = ["DE", "EF", "FD"];
+      const parts = [0, 1, 2].map(i => ({ id: i, name: names[i], el: `<line class="part" data-part="${i}" x1="${S(T2[i][0])}" y1="${S(T2[i][1])}" x2="${S(T2[(i + 1) % 3][0])}" y2="${S(T2[(i + 1) % 3][1])}" stroke="transparent" stroke-width="26" stroke-linecap="round"><title>Lado ${names[i]}</title></line>`,
+        hl: ln(T2[i], T2[(i + 1) % 3], "var(--gold)", 6) }));
+      return { body: b, parts, answer: 2, fixAnswer: ticks(T2[2], T2[0], 2) };
+    },
+    e: "DF corresponde a AC. Con DE = AB, ∠D = ∠A y DF = AC, el ángulo queda entre los dos lados: LAL." },
+  { r: 2, type: "number", q: "Completa el valor: ¿cuánto mide el ángulo x?", hint: "Los ángulos internos de un triángulo suman 180°.",
+    fig: svg(330, 200, poly([[40, 180], [240, 180], [168.6, 26.8]]) + arcs([40, 180], [240, 180], [168.6, 26.8], 1, COLS[0], 26) + arcs([240, 180], [40, 180], [168.6, 26.8], 1, COLS[1], 26)
+      + arcs([168.6, 26.8], [40, 180], [240, 180], 1, "var(--mark)", 20) + lab([88, 165], "50°", 0, 0, 15, "var(--a1)") + lab([206, 162], "65°", 0, 0, 15, "var(--a2)")
+      + lab([167, 62], "x", 0, 0, 18, "var(--mark)"), "triángulo con ángulos de 50 y 65 grados"),
+    answer: 65, unit: "°", e: "x = 180° − 50° − 65° = 65°. Como dos ángulos son iguales, el triángulo es isósceles." },
+  { r: 2, type: "number", q: "r ∥ s. Completa el valor del ángulo y.", hint: "Los conjugados internos (del mismo lado de la transversal, entre las paralelas) suman 180°.",
+    fig: (() => { const P1 = [213.4, 50], P2 = [186.6, 150]; return svg(400, 200, ln([20, 50], [380, 50]) + ln([20, 150], [380, 150]) + ln([175.9, 190], [224.1, 10], "var(--muted)", 2)
+      + lab([392, 50], "r", 0, 0, 15) + lab([392, 150], "s", 0, 0, 15) + arcPath(P1, 26, 105, 180, "var(--a1)", 2.6) + arcPath(P2, 26, 180, 285, "var(--mark)", 2.6)
+      + lab([166, 75], "75°", 0, 0, 15, "var(--a1)") + lab([155, 128], "y", 0, 0, 18, "var(--mark)"), "rectas paralelas con una transversal"); })(),
+    answer: 105, unit: "°", e: "Los dos ángulos están entre las paralelas y del mismo lado de la transversal: y + 75° = 180°, entonces y = 105°." },
+  // RONDA 4
+  { r: 3, type: "mcq", q: "Observa las marcas. ¿Qué criterio asegura que los triángulos son congruentes?", fig: pairSVG({ sides: [[0, 1], [1, 2], [2, 3]] }, "Pareja de triángulos"), fixed: true,
+    o: ["LLL", "LAL", "ALA", "No se puede saber"], a: 0, e: "Tres pares de lados iguales: LLL." },
+  { r: 3, type: "mcq", q: "Observa las marcas. ¿Qué criterio asegura que los triángulos son congruentes?", fig: pairSVG({ sides: [[0, 1]], angles: [[0, 1], [1, 2]] }, "Pareja de triángulos"), fixed: true,
+    o: ["LLL", "LAL", "ALA", "No se puede saber"], a: 2, e: "Dos ángulos y el lado que está entre ellos: ALA." },
+  { r: 3, type: "mcq", q: "Observa las marcas. ¿Qué criterio asegura que los triángulos son congruentes?", fig: pairSVG({ sides: [[0, 1], [1, 2]], angles: [[0, 1]] }, "Pareja de triángulos"), fixed: true,
+    o: ["LLL", "LAL", "ALA", "No se puede saber"], a: 3, e: "Dos lados y un ángulo que NO está entre ellos (LLA): puede haber dos triángulos distintos." },
+  { r: 3, type: "mcq", q: "Para medir el ancho de un río se construyen △TAC y △EDC con ∠A = ∠D = 90°, AC = CD y los ángulos en C opuestos por el vértice. ¿Qué criterio justifica que AT = DE?",
+    o: ["ALA", "LLL", "LAL", "AAA"], a: 0, e: "Ángulo recto, lado AC = CD y ángulo en C: ALA. Luego AT = DE por partes correspondientes." },
+  { r: 3, type: "mcq", q: "Medí 50 triángulos y todos sumaron 180°. Concluyo que todos los triángulos suman 180°. ¿Qué razonamiento usé?",
+    o: ["Inductivo", "Deductivo", "Por contradicción", "Contrarrecíproco"], a: 0, e: "Ir de casos particulares a una regla general es inducción: sugiere, pero no demuestra." },
+];
+
+/* ---------- motor del juego ---------- */
+let G = null, timerId = null;
+const app = document.getElementById("app");
+const shuffle = a => { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+const esc = t => String(t).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const itemsOf = t => t.type === "classify" ? t.items.length : t.type === "select" ? t.tiles.length : 1;
+
+function start(name) {
+  const order = [0, 1, 2, 3].flatMap(r => { const ts = TASKS.filter(t => t.r === r); return r === 2 ? ts : shuffle(ts); });
+  G = { name: name || "Estudiante", tasks: order, i: 0, score: 0, got: [0, 0, 0, 0], of: [0, 0, 0, 0], res: [], streak: 0, best: 0 };
+  next();
+}
+
+function hud(t) {
+  const prog = G.tasks.map((_, k) => `<span class="${k < G.i ? G.res[k] : k === G.i ? "now" : ""}"></span>`).join("");
+  return `<div class="hud"><span class="chip">Ronda ${t.r + 1} · ${ROUNDS[t.r]}</span>
+    <span class="muted">Reto ${G.i + 1} de ${G.tasks.length}${G.streak >= 2 ? ` · racha ×${G.streak}` : ""}</span>
+    <span class="score">${G.score} pts</span></div>
+    <div class="progress" aria-hidden="true">${prog}</div><div class="timer" id="timer"><i id="bar"></i></div>`;
+}
+
+function next() {
+  const t = G.tasks[G.i]; G.locked = false; G.left = SECS[t.type]; G.submit = null;
+  app.innerHTML = hud(t) + `<div class="stack pop"><span class="type">${TYPE[t.type]}</span><h2>${esc(t.q)}</h2>${t.hint ? `<p class="hint">${esc(t.hint)}</p>` : ""}<div id="task" class="stack"></div><div id="fb"></div></div>`;
+  RENDER[t.type](t, document.getElementById("task"));
+  clearInterval(timerId);
+  timerId = setInterval(() => {
+    G.left -= .25; const bar = document.getElementById("bar"), tm = document.getElementById("timer");
+    if (bar) bar.style.width = Math.max(0, G.left / SECS[t.type] * 100) + "%";
+    if (tm) tm.classList.toggle("low", G.left <= 8);
+    if (G.left <= 0) { if (G.submit) G.submit(true); else done(0, 1, true); }
+  }, 250);
+}
+
+function done(got, of, timeout) {
+  if (G.locked) return; G.locked = true; clearInterval(timerId);
+  const t = G.tasks[G.i], full = got === of, n = itemsOf(t);
+  const scaled = Math.round(got / of * n); // aciertos en unidades del reto
+  let pts = Math.round(100 * got / of);
+  if (full) { G.streak++; G.best = Math.max(G.best, G.streak); pts += Math.round(50 * Math.max(0, G.left) / SECS[t.type]) + (G.streak >= 3 ? 20 : 0); } else G.streak = 0;
+  G.score += pts; G.got[t.r] += scaled; G.of[t.r] += n; G.res.push(full ? "ok" : got > 0 ? "half" : "bad");
+  if (!full) G.wrong = (G.wrong || []).concat([t]);
+  const last = G.i === G.tasks.length - 1, cls = full ? "ok" : got > 0 ? "half" : "bad";
+  const head = full ? `¡Excelente! +${pts} pts` : timeout && got === 0 ? "Se acabó el tiempo." : got > 0 ? `Casi: ${got} de ${of}. +${pts} pts` : "No es correcto.";
+  document.getElementById("fb").innerHTML = `<div class="feedback ${cls} stack" style="gap:10px"><p><b>${head}</b> ${esc(t.e)}</p>
+    <div class="row"><button class="btn gold" id="next">${last ? "Ver mi resultado" : "Siguiente reto"}</button></div></div>`;
+  document.querySelector(".score").textContent = G.score + " pts";
+  const nb = document.getElementById("next"); nb.focus({ preventScroll: true });
+  nb.addEventListener("click", () => { G.i++; last ? finish() : next(); });
+}
+
+function checkBtn(box, label = "Comprobar") {
+  const row = document.createElement("div"); row.className = "row";
+  row.innerHTML = `<button class="btn" id="check">${label}</button>`; box.appendChild(row);
+  return row.querySelector("#check");
+}
+
+const RENDER = {
+  mcq(t, box) {
+    const order = t.fixed ? t.o.map((_, i) => i) : shuffle(t.o.map((_, i) => i)), ans = order.indexOf(t.a);
+    box.innerHTML = (t.fig ? `<figure>${t.fig}</figure>` : "") + `<div class="opts">${order.map((oi, k) => `<button class="opt" data-k="${"ABCD"[k]}">${esc(t.o[oi])}</button>`).join("")}</div>`;
+    box.querySelectorAll(".opt").forEach((b, k) => b.addEventListener("click", () => {
+      box.querySelectorAll(".opt").forEach((x, j) => { x.disabled = true; if (j === ans) x.classList.add("right"); else if (j === k) x.classList.add("wrong"); });
+      done(k === ans ? 1 : 0, 1);
+    }));
+  },
+
+  classify(t, box) {
+    const items = shuffle(t.items.map((it, i) => ({ ...it, id: i }))); const place = {}; let sel = null;
+    box.innerHTML = `<div class="pool" id="pool"></div><div class="bins">${t.bins.map((b, i) => `<div class="bin" role="button" tabindex="0" data-bin="${i}"><b>${esc(b)}</b><div class="slot"></div></div>`).join("")}</div>`;
+    const pool = box.querySelector("#pool"), bins = [...box.querySelectorAll(".bin")];
+    const els = {};
+    items.forEach(it => { const b = document.createElement("button"); b.className = "item" + (it.f ? " fig" : ""); b.innerHTML = it.f || esc(it.t);
+      b.setAttribute("aria-label", it.t || "figura"); b.addEventListener("click", e => { e.stopPropagation(); if (G.locked) return; sel = sel === it.id ? null : it.id; paint(); });
+      els[it.id] = b; pool.appendChild(b); });
+    function paint() { Object.entries(els).forEach(([id, el]) => el.classList.toggle("sel", +id === sel)); bins.forEach(b => b.classList.toggle("ready", sel !== null)); }
+    bins.forEach(bin => { const act = () => { if (G.locked || sel === null) return; const i = +bin.dataset.bin;
+        if (t.oneEach) { const occupant = Object.keys(place).find(k => place[k] === i && +k !== sel); if (occupant !== undefined) { delete place[occupant]; pool.appendChild(els[occupant]); } }
+        place[sel] = i; bin.querySelector(".slot").appendChild(els[sel]); sel = null; paint(); };
+      bin.addEventListener("click", act); bin.addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); act(); } }); });
+    pool.addEventListener("click", () => { if (G.locked || sel === null) return; delete place[sel]; pool.appendChild(els[sel]); sel = null; paint(); });
+    const cb = checkBtn(box);
+    G.submit = () => { cb.disabled = true; sel = null; paint(); let got = 0;
+      items.forEach(it => { const el = els[it.id], ok = place[it.id] === it.c; el.disabled = true; el.classList.add(ok ? "ok" : "bad"); if (ok) got++;
+        else { const f = document.createElement("span"); f.className = "fix"; f.textContent = "→ " + t.bins[it.c]; el.appendChild(f); } });
+      done(got, items.length); };
+    cb.addEventListener("click", () => G.submit());
+  },
+
+  select(t, box) {
+    const tiles = shuffle(t.tiles); const on = new Set();
+    box.innerHTML = `<div class="tiles"><figure class="tile" style="cursor:default;border-style:dashed"><span>modelo</span>${t.model}</figure>
+      <p style="grid-column: span 2; align-self: center"><b>Modelo.</b> Compara forma y tamaño: todas las piezas están dibujadas a la misma escala.</p></div>
+      <div class="tiles">${tiles.map((x, i) => `<button class="tile" data-i="${i}" aria-pressed="false"><span>${"abcdef"[i]}</span>${x.f}</button>`).join("")}</div>`;
+    const els = [...box.querySelectorAll(".tile[data-i]")];
+    els.forEach((el, i) => el.addEventListener("click", () => { if (G.locked) return; on.has(i) ? on.delete(i) : on.add(i); el.classList.toggle("on", on.has(i)); el.setAttribute("aria-pressed", on.has(i)); }));
+    const cb = checkBtn(box);
+    G.submit = () => { cb.disabled = true; let got = 0;
+      els.forEach((el, i) => { const right = on.has(i) === tiles[i].ok; if (right) got++; el.disabled = true; el.classList.remove("on");
+        if (tiles[i].ok) el.classList.add("ok"); else if (on.has(i)) el.classList.add("bad"); });
+      done(got, tiles.length); };
+    cb.addEventListener("click", () => G.submit());
+  },
+
+  point(t, box) {
+    box.innerHTML = `<figure class="tap"><svg viewBox="0 0 ${t.w} ${t.h}" id="tapsvg" role="img" aria-label="Figura para completar: toca el punto"><rect x="0" y="0" width="${t.w}" height="${t.h}" fill="transparent"/>${t.draw()}<g id="mark"></g></svg></figure>`;
+    const sv = box.querySelector("#tapsvg"), mark = sv.querySelector("#mark"); let pick = null;
+    sv.addEventListener("click", e => { if (G.locked) return; const pt = sv.createSVGPoint(); pt.x = e.clientX; pt.y = e.clientY;
+      const p = pt.matrixTransform(sv.getScreenCTM().inverse()); pick = t.grid ? [Math.round(p.x / 30) * 30, Math.round(p.y / 30) * 30] : [p.x, p.y];
+      mark.innerHTML = `<circle cx="${S(pick[0])}" cy="${S(pick[1])}" r="9" fill="none" stroke="var(--gold)" stroke-width="3"/>${dot(pick, "var(--gold)", 4)}`; cb.disabled = false; });
+    const cb = checkBtn(box, "Comprobar mi punto"); cb.disabled = true;
+    G.submit = () => { cb.disabled = true; const ok = pick && Math.hypot(pick[0] - t.target[0], pick[1] - t.target[1]) <= t.tol;
+      sv.insertAdjacentHTML("beforeend", t.reveal()); if (pick && !ok) mark.innerHTML = dot(pick, "var(--bad)", 6); done(ok ? 1 : 0, 1, !pick); };
+    cb.addEventListener("click", () => G.submit());
+  },
+
+  part(t, box) {
+    const B = t.build();
+    box.innerHTML = `<figure class="tap"><svg viewBox="0 0 400 170" id="psvg" role="img" aria-label="Dos triángulos; toca un lado de DEF">${B.body}<g id="hl"></g>${B.parts.map(p => p.el).join("")}</svg></figure>
+      <div class="row">${B.parts.map(p => `<button class="btn ghost" data-part="${p.id}">Lado ${p.name}</button>`).join("")}</div>`;
+    const sv = box.querySelector("#psvg"), hl = sv.querySelector("#hl");
+    const pickPart = i => { if (G.locked) return; const p = B.parts[i]; hl.innerHTML = p.hl.replace("var(--gold)", i === B.answer ? "var(--ok)" : "var(--bad)") + (i === B.answer ? "" : B.parts[B.answer].hl.replace("var(--gold)", "var(--ok)")) + B.fixAnswer;
+      box.querySelectorAll("button[data-part]").forEach(b => b.disabled = true); done(i === B.answer ? 1 : 0, 1); };
+    sv.querySelectorAll(".part").forEach(el => el.addEventListener("click", () => pickPart(+el.dataset.part)));
+    box.querySelectorAll("button[data-part]").forEach(b => b.addEventListener("click", () => pickPart(+b.dataset.part)));
+  },
+
+  number(t, box) {
+    box.innerHTML = `<figure>${t.fig}</figure><form class="numrow" id="nf"><label for="numin">Tu respuesta</label>
+      <input type="text" id="numin" inputmode="numeric" autocomplete="off" placeholder="0"><span class="score">${t.unit || ""}</span><button class="btn" type="submit">Comprobar</button></form>`;
+    const inp = box.querySelector("#numin");
+    G.submit = () => { const v = parseFloat(inp.value.replace(",", ".")); inp.disabled = true; box.querySelector("#nf button").disabled = true;
+      done(v === t.answer ? 1 : 0, 1, isNaN(v)); };
+    box.querySelector("#nf").addEventListener("submit", e => { e.preventDefault(); if (!G.locked && inp.value.trim()) G.submit(); });
+    setTimeout(() => inp.focus({ preventScroll: true }), 50);
+  },
+};
+
+function level(score) {
+  if (score >= 1700) return "Maestro euclidiano";
+  if (score >= 1150) return "Constructor sólido";
+  if (score >= 600) return "Aprendiz en camino";
+  return "A repasar con calma";
+}
+
+function finish() {
+  const got = G.got.reduce((a, b) => a + b, 0), of = G.of.reduce((a, b) => a + b, 0), lv = level(G.score);
+  const txt = `Reto Euclides · ${G.name} · ${G.score} pts · ${got}/${of} aciertos · ` + ROUNDS.map((r, k) => `R${k + 1}: ${G.got[k]}/${G.of[k]}`).join(" · ") + ` · Nivel: ${lv}`;
+  const wrong = G.wrong || [];
+  app.innerHTML = `<div class="stack pop">
+    <span class="eyebrow">Resultado de ${esc(G.name)}</span>
+    <div class="row" style="align-items:flex-end;gap:16px"><div class="big">${G.score}</div><p class="muted" style="padding-bottom:10px">puntos · ${got} de ${of} aciertos · mejor racha ×${G.best}</p></div>
+    <div><span class="medal">${lv}</span></div>
+    <div class="breakdown">${ROUNDS.map((r, k) => `<div><strong>${G.got[k]}/${G.of[k]}</strong><span>${r}</span></div>`).join("")}</div>
+    <label for="restxt">Copia tu resultado y pégalo en el chat de la clase</label>
+    <textarea class="result-text" id="restxt" rows="3" readonly>${esc(txt)}</textarea>
+    <div class="row"><button class="btn gold" id="copy">Copiar resultado</button><button class="btn ghost" id="again">Jugar otra vez</button><span id="copied" class="muted"></span></div>
+    ${wrong.length ? `<h2 style="font-size:20px">Para repasar</h2><div class="review">${wrong.map(t => `<div><b>${esc(t.q)}</b><br>${esc(t.e)}</div>`).join("")}</div>`
+      : `<p><b>¡Perfecto!</b> Completaste todos los retos sin errores. Reta a un compañero a superar tu puntaje.</p>`}
+  </div>`;
+  const ta = document.getElementById("restxt");
+  document.getElementById("copy").addEventListener("click", () => {
+    const say = m => document.getElementById("copied").textContent = m;
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(txt).then(() => say("Copiado. Pégalo en el chat."), () => { ta.select(); say("Texto seleccionado: cópialo con Ctrl+C."); });
+    else { ta.select(); say("Texto seleccionado: cópialo con Ctrl+C."); }
+  });
+  document.getElementById("again").addEventListener("click", () => start(G.name));
+}
+
+function home() {
+  let saved = ""; try { saved = localStorage.getItem("reto-euclides-nombre") || ""; } catch (e) {}
+  app.innerHTML = `<div class="stack">
+    <span class="eyebrow">Comprobación de saberes · Geometría</span>
+    <h1>Reto Euclides</h1>
+    <p class="muted">14 retos en 4 rondas: clasificar, reconocer formas, completar figuras y razonar. Responder rápido da más puntos y 3 aciertos seguidos suman un bono.</p>
+    <div class="rounds">
+      <div class="round"><b>1 · ¿A qué pertenece?</b><span>Lleva enunciados y trazos a su categoría</span></div>
+      <div class="round"><b>2 · Reconoce la forma</b><span>Tipos de triángulo y piezas congruentes</span></div>
+      <div class="round"><b>3 · Completa la figura</b><span>Toca el punto, marca el lado, halla el ángulo</span></div>
+      <div class="round"><b>4 · Congruencia y razonamiento</b><span>LLL, LAL, ALA y aplicaciones</span></div>
+    </div>
+    <form id="f" class="stack" style="gap:8px">
+      <label for="nombre">Tu nombre (como aparece en la clase)</label>
+      <input type="text" id="nombre" maxlength="40" autocomplete="name" placeholder="Ej.: Laura Gómez" value="${esc(saved)}">
+      <div class="row" style="margin-top:6px"><button class="btn" type="submit">Empezar el reto</button></div>
+    </form>
+    <div class="howto"><b>Al terminar:</b> copia tu resultado y pégalo en el chat de la clase virtual. Verás los retos que conviene repasar.</div>
+  </div>`;
+  document.getElementById("f").addEventListener("submit", e => { e.preventDefault(); const n = document.getElementById("nombre").value.trim();
+    try { localStorage.setItem("reto-euclides-nombre", n); } catch (er) {} start(n); });
+}
+home();
+})();
+</script>
+
+</body>
+</html>
