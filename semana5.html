@@ -1,0 +1,414 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>:root{color-scheme:light}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+</head>
+<body>
+<title>Laboratorio Trascendental Mecatrónico</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;700&family=Source+Sans+3:wght@400;600;700&family=JetBrains+Mono:wght@500;700&display=swap">
+<style>
+/* Layout: banco de pruebas de un taller — lista de misiones a la izquierda, pantalla de osciloscopio al centro, perillas (deslizadores) debajo */
+:root{
+  --bg:#F3F5FA; --panel:#FFFFFF; --ink:#1B2440; --muted:#5D6785; --line:#D5DBEA; --soft:#EEF1F8;
+  --navy:#22315A; --amber:#F4A314; --amber-ink:#8A5600; --ok:#1E7D4F; --ok-bg:#E3F3EA; --bad:#B8342A; --bad-bg:#FBE8E6;
+  --screen:#16213F; --grid:#26335C; --axis:#6F7DA8; --ghost:#8FA3D9; --curve:#F4A314; --label:#E9EDF8; --hit:#57C08A;
+  --f-display:"Chakra Petch","Segoe UI",system-ui,sans-serif;
+  --f-body:"Source Sans 3","Segoe UI",system-ui,sans-serif;
+  --f-math:"JetBrains Mono",ui-monospace,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0F1528; --panel:#18213D; --ink:#E9EDF8; --muted:#A2ACC8; --line:#2C3759; --soft:#1F2948;
+  --navy:#9FB3F2; --amber:#F6B23A; --amber-ink:#F6B23A; --ok:#57C08A; --ok-bg:#163527; --bad:#F07A6E; --bad-bg:#3A1C1C;
+  --screen:#0B1022; --grid:#1E284A; color-scheme:dark }}
+:root[data-theme="dark"]{
+  --bg:#0F1528; --panel:#18213D; --ink:#E9EDF8; --muted:#A2ACC8; --line:#2C3759; --soft:#1F2948;
+  --navy:#9FB3F2; --amber:#F6B23A; --amber-ink:#F6B23A; --ok:#57C08A; --ok-bg:#163527; --bad:#F07A6E; --bad-bg:#3A1C1C;
+  --screen:#0B1022; --grid:#1E284A; color-scheme:dark }
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font:17px/1.45 var(--f-body);
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:20px 36px}
+.wrap{max-width:1180px;margin:0 auto;display:grid;gap:18px}
+.tag{font:600 12px var(--f-display);letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+h1{font:700 clamp(28px,4.4vw,44px)/1.05 var(--f-display);margin:2px 0 0;text-wrap:balance}
+h1 span{color:var(--amber-ink)}
+.sub{color:var(--muted);margin:6px 0 0;max-width:70ch}
+.layout{display:grid;grid-template-columns:250px minmax(0,1fr);gap:18px;align-items:start}
+@media (max-width:860px){.layout{grid-template-columns:1fr}}
+nav{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px;display:grid;gap:6px}
+@media (max-width:860px){nav{grid-template-columns:repeat(auto-fill,minmax(150px,1fr))}}
+.mbtn{display:flex;gap:10px;align-items:center;width:100%;text-align:left;font:600 15px var(--f-body);color:var(--ink);background:transparent;border:2px solid transparent;border-radius:10px;padding:8px 10px;cursor:pointer;min-width:0}
+.mbtn:hover{background:var(--soft)}
+.mbtn[aria-current="true"]{border-color:var(--amber);background:var(--soft)}
+.mbtn .n{flex:none;width:28px;height:28px;border-radius:50%;display:grid;place-items:center;font:700 13px var(--f-display);background:var(--soft);color:var(--muted);border:1px solid var(--line)}
+.mbtn.done .n{background:var(--ok);color:#fff;border-color:var(--ok)}
+.mbtn .t{min-width:0;display:grid}
+.mbtn small{color:var(--muted);font-weight:400;font-size:13px}
+.stars{color:var(--amber);letter-spacing:1px;font-size:13px}
+.progress{display:flex;justify-content:space-between;align-items:center;padding:6px 4px 2px;border-top:1px solid var(--line);margin-top:4px;font-size:14px;color:var(--muted)}
+.progress b{font:700 18px var(--f-math);color:var(--ink)}
+main{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:20px;display:grid;gap:16px;min-width:0}
+.mhead{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between}
+.chip{font:600 12px var(--f-display);letter-spacing:.08em;text-transform:uppercase;padding:5px 10px;border-radius:999px;border:1px solid var(--amber);color:var(--amber-ink)}
+h2{font:700 clamp(22px,2.8vw,28px)/1.15 var(--f-display);margin:0;text-wrap:balance}
+.ctx{margin:0;max-width:75ch}
+.task{background:var(--soft);border-radius:10px;padding:12px 14px;font-weight:600}
+.task .math{font-weight:700}
+.math{font-family:var(--f-math)}
+.bench{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(0,1fr);gap:16px;align-items:start}
+@media (max-width:980px){.bench{grid-template-columns:1fr}}
+.screen{background:var(--screen);border-radius:12px;padding:8px;position:relative}
+.screen canvas{display:block;width:100%;aspect-ratio:4/3;height:auto}
+.status{position:absolute;right:16px;top:14px;font:700 13px var(--f-display);letter-spacing:.08em;text-transform:uppercase;padding:4px 10px;border-radius:6px;background:rgba(0,0,0,.35);color:#E9EDF8}
+.status.on{background:var(--hit);color:#0B1022}
+.controls{display:grid;gap:14px;min-width:0}
+.eq{font:700 clamp(17px,2vw,21px)/1.3 var(--f-math);background:var(--soft);border-radius:10px;padding:12px 14px;overflow-x:auto;white-space:nowrap}
+.eq .v{color:var(--amber-ink)}
+.knob{display:grid;gap:4px}
+.knob label{display:flex;justify-content:space-between;font-weight:600;font-size:15px}
+.knob output{font:700 16px var(--f-math);color:var(--amber-ink);font-variant-numeric:tabular-nums}
+input[type=range]{width:100%;accent-color:var(--amber);height:28px}
+.row{display:flex;flex-wrap:wrap;gap:10px}
+.btn{font:700 15px var(--f-display);letter-spacing:.04em;padding:11px 16px;border-radius:10px;border:0;cursor:pointer;background:var(--navy);color:var(--panel)}
+.btn.amber{background:var(--amber);color:#1B2440}
+.btn.ghost{background:transparent;color:var(--ink);border:2px solid var(--line)}
+.btn:focus-visible,.mbtn:focus-visible,.opt:focus-visible,input:focus-visible{outline:3px solid var(--amber);outline-offset:2px}
+.fb{border-radius:10px;padding:12px 14px;border:1px solid var(--line);background:var(--soft)}
+.fb strong{display:block;font:700 16px var(--f-display);margin-bottom:2px}
+.fb.ok{background:var(--ok-bg);border-color:var(--ok)} .fb.ok strong{color:var(--ok)}
+.fb.bad{background:var(--bad-bg);border-color:var(--bad)} .fb.bad strong{color:var(--bad)}
+.fb ol{margin:6px 0 0;padding-left:20px} .fb li{margin:2px 0}
+.quiz{display:grid;gap:10px}
+.opts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+@media (max-width:520px){.opts{grid-template-columns:1fr}}
+.opt{font:600 16px var(--f-body);text-align:left;padding:10px 12px;border-radius:10px;border:2px solid var(--line);background:var(--panel);color:var(--ink);cursor:pointer;min-width:0;overflow-wrap:anywhere}
+.opt:hover:not(:disabled){border-color:var(--amber)}
+.opt.ok{border-color:var(--ok);background:var(--ok-bg)} .opt.bad{border-color:var(--bad);background:var(--bad-bg)}
+.final{text-align:center;display:grid;gap:10px;justify-items:center;padding:16px 0}
+.final .big{font:700 clamp(40px,8vw,70px)/1 var(--f-display);color:var(--amber-ink)}
+.legend{font-size:14px;color:var(--muted);margin:0}
+@media (prefers-reduced-motion:reduce){*{scroll-behavior:auto}}
+</style>
+
+<div class="wrap">
+  <header>
+    <div class="tag">Precálculo · Semana 5 · Ingeniería Mecatrónica</div>
+    <h1>Laboratorio <span>Trascendental</span></h1>
+    <p class="sub">Eres el ingeniero del taller. En cada misión mueve los deslizadores de una ecuación exponencial, logarítmica o trigonométrica hasta que la máquina funcione. Usa las pistas solo si las necesitas: resolver sin ayuda da 3 estrellas.</p>
+  </header>
+  <div class="layout">
+    <nav id="nav" aria-label="Misiones"></nav>
+    <main id="main" aria-live="polite"></main>
+  </div>
+</div>
+
+<script>
+// ===================== utilidades de dibujo =====================
+const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const fmt = (v,d=1) => { const s = (+v).toFixed(d).replace(/\.0+$/,'').replace(/(\.\d*?)0+$/,'$1'); return s==='-0'?'0':s; };
+const sg = v => v<0 ? '− '+fmt(-v) : '+ '+fmt(v);
+const W = 800, H = 600;
+
+function makePlot(cv, view){
+  const dpr = Math.max(1, window.devicePixelRatio||1);
+  cv.width = W*dpr; cv.height = H*dpr;
+  const c = cv.getContext('2d'); c.setTransform(dpr,0,0,dpr,0,0);
+  let {xmin,xmax,ymin,ymax} = view;
+  if(view.w){ xmin = view.cx-view.w/2; xmax = view.cx+view.w/2; const h = view.w*H/W; ymin = view.cy-h/2; ymax = view.cy+h/2; }
+  const X = x => (x-xmin)/(xmax-xmin)*W, Y = y => H-(y-ymin)/(ymax-ymin)*H;
+  const P = {c,X,Y,xmin,xmax,ymin,ymax};
+  P.clear = () => { c.fillStyle = css('--screen'); c.fillRect(0,0,W,H); };
+  P.grid = (sx, sy) => {
+    c.strokeStyle = css('--grid'); c.lineWidth = 1;
+    for(let v=Math.ceil(xmin/sx)*sx; v<=xmax; v+=sx){ c.beginPath(); c.moveTo(X(v),0); c.lineTo(X(v),H); c.stroke(); }
+    for(let v=Math.ceil(ymin/sy)*sy; v<=ymax; v+=sy){ c.beginPath(); c.moveTo(0,Y(v)); c.lineTo(W,Y(v)); c.stroke(); }
+    c.strokeStyle = css('--axis'); c.lineWidth = 1.6; c.beginPath();
+    if(xmin<0&&xmax>0){ c.moveTo(X(0),0); c.lineTo(X(0),H); }
+    if(ymin<0&&ymax>0){ c.moveTo(0,Y(0)); c.lineTo(W,Y(0)); }
+    c.stroke();
+    c.fillStyle = css('--axis'); c.font = '600 18px '+css('--f-math');
+    const yl = (ymin<0&&ymax>0)?Y(0)+18:H-8, xl = (xmin<0&&xmax>0)?X(0)-8:8;
+    for(let v=Math.ceil(xmin/sx)*sx; v<=xmax; v+=sx){ if(Math.abs(v)<1e-9) continue; c.textAlign='center'; c.fillText(fmt(v), X(v), yl); }
+    for(let v=Math.ceil(ymin/sy)*sy; v<=ymax; v+=sy){ if(Math.abs(v)<1e-9) continue; c.textAlign=(xmin<0&&xmax>0)?'right':'left'; c.fillText(fmt(v), xl, Y(v)+5); }
+  };
+  P.path = (fn, a, b, opt={}) => {
+    c.save(); c.strokeStyle = opt.color||css('--curve'); c.lineWidth = opt.w||4; c.lineCap='round'; c.lineJoin='round';
+    if(opt.dash) c.setLineDash(opt.dash);
+    c.beginPath(); let first = true; const n = opt.n||400;
+    for(let i=0;i<=n;i++){ const t=a+(b-a)*i/n; const [x,y]=fn(t); if(!isFinite(x)||!isFinite(y)){first=true;continue;} first?c.moveTo(X(x),Y(y)):c.lineTo(X(x),Y(y)); first=false; }
+    c.stroke(); c.restore();
+  };
+  P.dot = (x,y,col,r=7) => { c.fillStyle = col||css('--curve'); c.beginPath(); c.arc(X(x),Y(y),r,0,7); c.fill(); c.strokeStyle=css('--screen'); c.lineWidth=2; c.stroke(); };
+  P.text = (s,x,y,col,align='left',size=22) => { c.fillStyle = col||css('--label'); c.font = `700 ${size}px ${css('--f-math')}`; c.textAlign = align; c.fillText(s, X(x), Y(y)); };
+  P.ptext = (s,px,py,col,align='left',size=22) => { c.fillStyle = col||css('--label'); c.font = `700 ${size}px ${css('--f-math')}`; c.textAlign = align; c.fillText(s, px, py); };
+  P.seg = (x1,y1,x2,y2,col,w=2,dash) => { c.save(); c.strokeStyle=col; c.lineWidth=w; if(dash) c.setLineDash(dash); c.beginPath(); c.moveTo(X(x1),Y(y1)); c.lineTo(X(x2),Y(y2)); c.stroke(); c.restore(); };
+  return P;
+}
+const near = (a,b,t=0.01) => Math.abs(a-b) <= t;
+
+// ===================== misiones =====================
+const MISSIONS = [
+{ id:'arranque', tema:'Exponencial', titulo:'Sintoniza el arranque del motor DC', corto:'Exponencial · arranque',
+  ctx:'Un motor DC arranca hacia 3000 rpm siguiendo ω(t) = 3000(1 − e^(−t/τ)). La especificación dice: debe llegar al 95 % (2850 rpm) en exactamente 1.5 s.',
+  task:'Ajusta la constante de tiempo τ hasta que la curva pase por el punto de especificación (1.5 s, 2850 rpm).',
+  view:{xmin:-0.5,xmax:3.2,ymin:-250,ymax:3450}, grid:[0.5,500],
+  params:[{k:'tau',label:'τ · constante de tiempo (s)',min:0.1,max:1.5,step:0.1,init:1.0}],
+  eq:p=>`ω(t) = 3000(1 − e<sup>−t/<span class="v">${fmt(p.tau)}</span></sup>)    ω(1.5) = <span class="v">${fmt(3000*(1-Math.exp(-1.5/p.tau)),0)} rpm</span>`,
+  ok:p=>near(p.tau,0.5),
+  draw(P,p,ok){ P.seg(-0.5,3000,3.2,3000,css('--axis'),1.5,[4,6]); P.seg(-0.5,2850,3.2,2850,'#E07A6E',1.5,[8,6]);
+    P.path(t=>[t,3000*(1-Math.exp(-t/p.tau))],0,3.2,{color:ok?css('--hit'):css('--curve')});
+    P.dot(1.5,2850,'#E9EDF8',9); P.text('meta (1.5 s, 2850 rpm)',1.6,2550,'#E9EDF8');
+    P.text('t (s)',2.85,-150,css('--axis')); },
+  hints:['95 % significa que 1 − e^(−1.5/τ) = 0.95, o sea e^(−1.5/τ) = 0.05.','ln(0.05) ≈ −3, así que 1.5/τ = 3.'],
+  sol:['e^(−1.5/τ) = 0.05','−1.5/τ = ln(0.05) ≈ −3','τ = 1.5/3 = 0.5 s  (regla: 95 % en 3τ)'],
+  q:{t:'¿Qué porcentaje de su velocidad final alcanza el motor cuando t = τ?',o:['50 %','63 %','95 %','100 %'],a:1,why:'1 − e^(−1) ≈ 0.632: en una constante de tiempo llega al 63 %.'} },
+
+{ id:'enfria', tema:'Exponencial', titulo:'¿Cuándo se puede tocar el motor?', corto:'Exponencial · enfriamiento',
+  ctx:'Un motor se apaga a 80 °C en un taller a 25 °C. Se enfría según T(t) = 25 + 55e^(−0.1t), con t en minutos. Por seguridad solo se manipula por debajo de 40 °C.',
+  task:'Mueve el tiempo t hasta que la temperatura llegue a 40 °C.',
+  view:{xmin:-4,xmax:41,ymin:12,ymax:88}, grid:[5,10],
+  params:[{k:'t',label:'t · tiempo (min)',min:0,max:40,step:1,init:2}],
+  eq:p=>`T(<span class="v">${fmt(p.t)}</span>) = 25 + 55e<sup>−0.1·${fmt(p.t)}</sup> = <span class="v">${fmt(25+55*Math.exp(-0.1*p.t),1)} °C</span>`,
+  ok:p=>near(p.t,13),
+  draw(P,p,ok){ P.seg(-1.5,25,41,25,css('--axis'),1.5,[4,6]); P.text('ambiente 25 °C',27,27,css('--axis'));
+    P.seg(-1.5,40,41,40,'#E07A6E',1.8,[8,6]); P.text('seguro: 40 °C',29,42,'#E07A6E');
+    P.path(t=>[t,25+55*Math.exp(-0.1*t)],0,41,{color:css('--ghost'),w:3});
+    const T=25+55*Math.exp(-0.1*p.t); P.seg(p.t,12,p.t,T,ok?css('--hit'):css('--curve'),2,[4,4]); P.dot(p.t,T,ok?css('--hit'):css('--curve'),10);
+    P.text('t (min)',36,14,css('--axis')); },
+  hints:['Plantea 40 = 25 + 55e^(−0.1t) y aísla la exponencial.','e^(−0.1t) = 15/55; aplica ln a ambos lados.'],
+  sol:['e^(−0.1t) = 15/55 = 0.2727','−0.1t = ln(0.2727) = −1.299','t ≈ 13 minutos'],
+  q:{t:'Si esperas muchísimo tiempo, ¿a qué temperatura llega el motor?',o:['0 °C','40 °C','25 °C','80 °C'],a:2,why:'Cuando t crece, e^(−0.1t) → 0 y T → 25 °C (la temperatura del taller).'} },
+
+{ id:'base', tema:'Exponencial', titulo:'Iguala los exponentes', corto:'Exponencial · misma base',
+  ctx:'Un contador digital triplica su registro en cada pulso. Para saber cuándo llega a 81 se resuelve 3^(2x − 1) = 81.',
+  task:'Mueve x hasta que la curva y = 3^(2x − 1) corte la línea y = 81. Después piensa cómo se obtiene sin gráfica.',
+  view:{xmin:-0.6,xmax:3.6,ymin:-12,ymax:130}, grid:[0.5,20],
+  params:[{k:'x',label:'x',min:0,max:3.5,step:0.25,init:1}],
+  eq:p=>`3<sup>2(<span class="v">${fmt(p.x,2)}</span>) − 1</sup> = <span class="v">${fmt(Math.pow(3,2*p.x-1),2)}</span>   (meta: 81)`,
+  ok:p=>near(p.x,2.5),
+  draw(P,p,ok){ P.seg(-0.4,81,3.6,81,'#E07A6E',1.8,[8,6]); P.text('y = 81',0.0,86,'#E07A6E');
+    P.path(x=>[x,Math.pow(3,2*x-1)],-0.4,3.6,{color:css('--ghost'),w:3});
+    const y=Math.pow(3,2*p.x-1); P.seg(p.x,-12,p.x,Math.min(y,130),ok?css('--hit'):css('--curve'),2,[4,4]); if(y<130) P.dot(p.x,y,ok?css('--hit'):css('--curve'),10); },
+  hints:['81 también es una potencia de 3: 81 = 3^?','Si 3^(2x−1) = 3^4, entonces 2x − 1 = 4.'],
+  sol:['81 = 3⁴  →  3^(2x−1) = 3⁴','2x − 1 = 4','x = 5/2 = 2.5'],
+  q:{t:'¿Por qué se pueden igualar los exponentes?',o:['Porque las bases son iguales','Porque 81 es par','Porque x es positivo','Siempre se puede'],a:0,why:'Si a^m = a^n con la misma base (a > 0, a ≠ 1), entonces m = n.'} },
+
+{ id:'newton', tema:'Método numérico', titulo:'Newton–Raphson en vivo', corto:'Numérico · Newton',
+  ctx:'La ecuación e^(−x) = x no se puede despejar. El controlador del robot la resuelve con Newton–Raphson: f(x) = e^(−x) − x y x_(n+1) = x_n − f(x_n)/f′(x_n).',
+  task:'Elige un punto de partida x₀ y aumenta las iteraciones n hasta que la raíz quede estable con 3 decimales (0.567).',
+  view:{xmin:-1.3,xmax:2.4,ymin:-2.6,ymax:4}, grid:[0.5,1],
+  params:[{k:'x0',label:'x₀ · punto de partida',min:-1,max:2,step:0.5,init:2},{k:'n',label:'n · iteraciones',min:0,max:4,step:1,init:0}],
+  iters(p){ const f=x=>Math.exp(-x)-x, d=x=>-Math.exp(-x)-1; const xs=[p.x0]; for(let i=0;i<p.n;i++){ const x=xs[xs.length-1]; xs.push(x-f(x)/d(x)); } return xs; },
+  eq(p){ const xs=this.iters(p); return xs.map((x,i)=>`x<sub>${i}</sub> = <span class="v">${x.toFixed(4)}</span>`).join('<br>'); },
+  ok(p){ const xs=this.iters(p); return p.n>=3 && Math.abs(xs[xs.length-1]-0.567143)<0.0005; },
+  draw(P,p,ok){ const f=x=>Math.exp(-x)-x, d=x=>-Math.exp(-x)-1;
+    P.path(x=>[x,f(x)],-1.3,2.4,{color:css('--ghost'),w:3});
+    const xs=this.iters(p); const cols=['#F4A314','#57C08A','#8FD0FF','#E07A6E'];
+    for(let i=0;i<xs.length-1;i++){ const a=xs[i], b=xs[i+1]; P.seg(a,0,a,f(a),css('--axis'),1.2,[3,4]);
+      P.seg(a-0.4,f(a)-0.4*d(a),b+0.3,f(a)+(b+0.3-a)*d(a),cols[i%4],2.2); P.dot(a,f(a),cols[i%4],7); }
+    const last=xs[xs.length-1]; P.dot(last,0,ok?css('--hit'):css('--curve'),10);
+    P.text(`x${['₀','₁','₂','₃','₄'][xs.length-1]} = ${last.toFixed(4)}`,last>1.2?last-0.08:last+0.08,0.35,ok?css('--hit'):'#E9EDF8',last>1.2?'right':'left'); },
+  hints:['Cada tangente corta el eje x en la siguiente aproximación. Sube n de uno en uno.','Desde casi cualquier x₀ basta con 3 o 4 iteraciones.'],
+  sol:['f(x) = e^(−x) − x,  f′(x) = −e^(−x) − 1','Desde x₀ = 0: 0 → 0.5 → 0.5663 → 0.5671','La raíz es x ≈ 0.567'],
+  q:{t:'¿Qué representa cada nueva aproximación en la gráfica?',o:['El máximo de la curva','El corte de la tangente con el eje x','El corte con el eje y','El punto medio'],a:1,why:'Newton traza la tangente en x_n y toma su corte con el eje x como x_(n+1).'} },
+
+{ id:'db', tema:'Logarítmica', titulo:'Controla el ruido de la celda robótica', corto:'Logarítmica · decibeles',
+  ctx:'Cada motor de una celda robótica produce 80 dB. Con n motores iguales el nivel es L = 80 + 10·log(n). El supervisor quiere saber cuántos motores llevan la celda a 90 dB.',
+  task:'Mueve el número de motores n hasta que el nivel de ruido sea 90 dB.',
+  view:{xmin:0,xmax:13,ymin:77,ymax:93}, grid:[1,2],
+  params:[{k:'n',label:'n · número de motores',min:1,max:12,step:1,init:2}],
+  eq:p=>`L = 80 + 10·log(<span class="v">${fmt(p.n)}</span>) = <span class="v">${fmt(80+10*Math.log10(p.n),2)} dB</span>`,
+  ok:p=>near(p.n,10),
+  draw(P,p,ok){ P.seg(0,90,13,90,'#E07A6E',1.8,[8,6]); P.text('límite 90 dB',0.4,90.6,'#E07A6E');
+    P.path(n=>[n,80+10*Math.log10(n)],1,12.8,{color:css('--ghost'),w:3});
+    const c=P.c; for(let i=1;i<=p.n;i++){ c.fillStyle=ok?css('--hit'):css('--curve'); c.fillRect(P.X(i)-9,P.Y(78.2)-18,18,18); }
+    const L=80+10*Math.log10(p.n); P.dot(p.n,L,ok?css('--hit'):css('--curve'),10); P.text('motores',10.6,77.6,css('--axis')); },
+  hints:['Plantea 90 = 80 + 10·log(n).','log(n) = 1 significa n = 10¹.'],
+  sol:['90 = 80 + 10·log(n)','log(n) = 1','n = 10 motores'],
+  q:{t:'Si un motor hace 80 dB, ¿cuánto hacen dos motores iguales?',o:['160 dB','83 dB','90 dB','82 dB'],a:1,why:'80 + 10·log(2) = 80 + 3 = 83 dB: duplicar la fuente suma solo 3 dB.'} },
+
+{ id:'dominio', tema:'Logarítmica', titulo:'Cuidado con el dominio', corto:'Logarítmica · dominio',
+  ctx:'Resolviendo log(x − 5) + log(x + 4) = 1 se llega a x² − x − 30 = 0, con candidatas x = 6 y x = −5. Solo una sirve.',
+  task:'Mueve x por la recta. Encuentra la solución válida y mira qué pasa con la otra candidata.',
+  view:{xmin:-7,xmax:10.5,ymin:-1.2,ymax:2.4}, grid:[1,0.5],
+  params:[{k:'x',label:'x',min:-6,max:10,step:0.5,init:8}],
+  eq:p=>{ if(p.x<=5) return `log(${fmt(p.x-5)}) <span class="v">no existe</span>: el argumento x − 5 = ${fmt(p.x-5)} no es positivo`;
+    return `log(${fmt(p.x-5)}) + log(${fmt(p.x+4)}) = <span class="v">${fmt(Math.log10(p.x-5)+Math.log10(p.x+4),3)}</span>   (meta: 1)`; },
+  ok:p=>near(p.x,6),
+  draw(P,p,ok){ const c=P.c; c.fillStyle='rgba(224,122,110,0.22)'; c.fillRect(P.X(-7),0,P.X(5)-P.X(-7),H);
+    P.text('fuera del dominio (x ≤ 5)',-6.6,2.1,'#E07A6E');
+    P.seg(-7,1,10.5,1,css('--axis'),1.5,[8,6]);
+    P.path(x=>[x,Math.log10(x-5)+Math.log10(x+4)],5.02,10.5,{color:css('--ghost'),w:3,n:600});
+    if(p.x>5){ const y=Math.log10(p.x-5)+Math.log10(p.x+4); P.dot(p.x,y,ok?css('--hit'):css('--curve'),10); }
+    else { P.c.strokeStyle='#E07A6E'; P.c.lineWidth=4; const X=P.X(p.x),Y=P.Y(1); P.c.beginPath(); P.c.moveTo(X-10,Y-10); P.c.lineTo(X+10,Y+10); P.c.moveTo(X+10,Y-10); P.c.lineTo(X-10,Y+10); P.c.stroke();
+      if(near(p.x,-5)) P.text('x = −5 resuelve la cuadrática, pero log(−10) no existe',-6.6,1.6,'#E9EDF8',  'left',18); } },
+  hints:['El argumento de cada logaritmo debe ser positivo: x − 5 > 0 y x + 4 > 0.','Prueba las dos candidatas: x = 6 y x = −5.'],
+  sol:['Dominio: x > 5','(x − 5)(x + 4) = 10 → x² − x − 30 = 0 → x = 6 ó x = −5','x = 6 ✓   x = −5 ✗ (fuera del dominio)'],
+  q:{t:'¿Cuál es el dominio de log(x − 3)?',o:['x ≥ 3','x > 3','x > 0','todos los reales'],a:1,why:'El argumento debe ser positivo: x − 3 > 0 → x > 3.'} },
+
+{ id:'brazo', tema:'Trigonométrica', titulo:'Encuentra las dos posturas del brazo', corto:'Trigonométrica · brazo',
+  ctx:'Un eslabón de 0.5 m gira un ángulo θ. La altura de la pinza es h = 0.5·sen(θ). Para tomar una pieza, la pinza debe quedar a 0.25 m.',
+  task:'Gira θ y encuentra LAS DOS posturas que ponen la pinza a 0.25 m de altura.',
+  view:{cx:0,cy:0.2,w:1.7}, grid:[0.2,0.2],
+  params:[{k:'th',label:'θ · ángulo del motor (°)',min:0,max:180,step:5,init:60}],
+  found:new Set(), reset(){ this.found=new Set(); },
+  eq(p){ const h=0.5*Math.sin(p.th*Math.PI/180); const f=[30,150].map(a=>this.found.has(a)?`${a}° ✓`:'?').join('   ');
+    return `h = 0.5·sen(<span class="v">${fmt(p.th)}°</span>) = <span class="v">${fmt(h,3)} m</span><br>Posturas encontradas: <span class="v">${f}</span>`; },
+  ok(p){ return this.found.has(30)&&this.found.has(150); },
+  draw(P,p,ok){ if(near(p.th,30)) this.found.add(30); if(near(p.th,150)) this.found.add(150);
+    const eqEl=document.getElementById('eq'); if(eqEl) eqEl.innerHTML=this.eq(p);
+    P.seg(-0.85,0.25,0.85,0.25,'#E07A6E',1.8,[8,6]); P.text('h = 0.25 m',0.45,0.28,'#E07A6E');
+    for(const a of this.found){ const r=a*Math.PI/180; P.seg(0,0,0.5*Math.cos(r),0.5*Math.sin(r),css('--hit'),5); }
+    const r=p.th*Math.PI/180, ex=0.5*Math.cos(r), ey=0.5*Math.sin(r), hit=near(p.th,30)||near(p.th,150);
+    P.c.fillStyle='#3A4878'; P.c.fillRect(P.X(-0.12),P.Y(0),P.X(0.12)-P.X(-0.12),P.Y(-0.08)-P.Y(0));
+    P.seg(0,0,ex,ey,hit?css('--hit'):css('--curve'),16); P.dot(ex,ey,'#E9EDF8',11); P.dot(0,0,'#E9EDF8',9);
+    P.seg(ex,0,ex,ey,css('--axis'),1.2,[3,4]); },
+  hints:['sen(θ) = 0.25/0.5 = 0.5. ¿Qué ángulo conoces con seno 0.5?','El seno también es positivo en el segundo cuadrante: 180° − α.'],
+  sol:['0.5·sen(θ) = 0.25 → sen(θ) = 0.5','θ = 30°','θ = 180° − 30° = 150° (segunda postura)'],
+  q:{t:'¿Por qué sen(θ) = 0.5 tiene dos soluciones entre 0° y 180°?',o:['Por error de redondeo','Porque el seno es positivo en el I y II cuadrante','Porque el brazo es simétrico','No tiene dos'],a:1,why:'sen(α) = sen(180° − α): el seno es positivo en los cuadrantes I y II.'} },
+
+{ id:'ac', tema:'Trigonométrica', titulo:'Dispara el control en la señal AC', corto:'Trigonométrica · señal AC',
+  ctx:'La red eléctrica de 60 Hz es v(t) = 170·sen(120πt). Un control de velocidad con TRIAC debe disparar la primera vez que el voltaje llega a 85 V.',
+  task:'Mueve el tiempo (en milisegundos) hasta el primer instante en que v = 85 V. Usa las flechas del teclado para afinar.',
+  view:{xmin:-2.2,xmax:17.5,ymin:-200,ymax:200}, grid:[2,50],
+  params:[{k:'t',label:'t · tiempo (ms)',min:0,max:16,step:0.01,init:4}],
+  eq:p=>`v = 170·sen(120π·<span class="v">${fmt(p.t,2)}</span>·10⁻³) = <span class="v">${fmt(170*Math.sin(120*Math.PI*p.t/1000),1)} V</span>`,
+  ok:p=>Math.abs(p.t-1000/720)<0.02,
+  draw(P,p,ok){ P.seg(-0.6,85,17.5,85,'#E07A6E',1.8,[8,6]); P.text('85 V',15.6,93,'#E07A6E');
+    P.path(t=>[t,170*Math.sin(120*Math.PI*t/1000)],0,17.5,{color:css('--ghost'),w:3,n:600});
+    const v=170*Math.sin(120*Math.PI*p.t/1000); P.seg(p.t,0,p.t,v,ok?css('--hit'):css('--curve'),2,[4,4]); P.dot(p.t,v,ok?css('--hit'):css('--curve'),10);
+    if(near(p.t,6.94,0.03)) P.text('85 V otra vez, pero bajando: no es el primer instante',0,-150,'#E9EDF8','left',18);
+    P.text('t (ms)',16,-20,css('--axis')); },
+  hints:['170·sen(120πt) = 85 → sen(120πt) = 0.5','El primer ángulo con seno 0.5 es π/6: 120πt = π/6.'],
+  sol:['sen(120πt) = 0.5','120πt = π/6 → t = 1/720 s','t ≈ 1.39 ms'],
+  q:{t:'¿Cuántas veces por ciclo la señal vale +85 V?',o:['1','2','4','Infinitas'],a:1,why:'Dos: en π/6 (subiendo) y en 5π/6 (bajando), igual que sen x = 0.5.'} },
+];
+
+const CERT = [
+ {t:'¿Qué método usas para ln(x) = 3 − x?',o:['Igualar bases','Aplicar ln','Método numérico','Fórmula general'],a:2,why:'La x está dentro del logaritmo y fuera de él: no se puede aislar.'},
+ {t:'Resuelve 2^(x+1) = 32',o:['x = 5','x = 4','x = 16','x = 6'],a:1,why:'32 = 2⁵ → x + 1 = 5 → x = 4.'},
+ {t:'Si log₂(x) = 5, ¿cuánto vale x?',o:['10','25','32','2.5'],a:2,why:'Forma exponencial: x = 2⁵ = 32.'},
+ {t:'Soluciones de sen(x) = 1/2 en [0, 2π)',o:['π/6 y 5π/6','π/3 y 2π/3','π/6 solamente','π/6 y 7π/6'],a:0,why:'α = π/6 y su simétrico π − π/6 = 5π/6.'},
+ {t:'¿Cuál es el dominio de log(x − 3)?',o:['x ≥ 3','x > 3','x > 0','x ≠ 3'],a:1,why:'El argumento debe ser positivo: x − 3 > 0.'},
+ {t:'Resuelve e^(2x) = 7',o:['x = ln 7','x = ln 7 / 2 ≈ 0.973','x = 3.5','x = 7/e²'],a:1,why:'2x = ln 7 → x = ln 7 / 2 ≈ 0.973.'},
+];
+
+// ===================== estado =====================
+const KEY='lab-trascendental-v1';
+let saved={}; try{ saved = JSON.parse(localStorage.getItem(KEY)||'{}'); }catch(e){ saved={}; }
+const S = { cur:0, stars:saved.stars||{}, cert:saved.cert??null, p:{}, help:0, solved:false, qDone:false, certI:0, certOk:0, certPick:null };
+const persist = () => { try{ localStorage.setItem(KEY, JSON.stringify({stars:S.stars,cert:S.cert})); }catch(e){} };
+
+function enter(i){
+  S.cur=i; S.help=0; S.solved=false; S.qDone=false; S.qPick=null; S.fb=null;
+  if(i<MISSIONS.length){ S.p={}; MISSIONS[i].params.forEach(q=>S.p[q.k]=q.init); if(MISSIONS[i].reset) MISSIONS[i].reset(); }
+  else { S.certI=0; S.certOk=0; S.certPick=null; }
+  renderNav(); renderMain();
+}
+
+// ===================== vista =====================
+function renderNav(){
+  const nav=document.getElementById('nav');
+  const items = MISSIONS.map((m,i)=>{ const st=S.stars[m.id]||0;
+    return `<button class="mbtn ${st?'done':''}" data-i="${i}" aria-current="${S.cur===i}"><span class="n">${st?'✓':i+1}</span><span class="t">${m.corto}<small>${st?'<span class="stars">'+'★'.repeat(st)+'☆'.repeat(3-st)+'</span>':m.tema}</small></span></button>`;}).join('');
+  const total = Object.values(S.stars).reduce((a,b)=>a+b,0);
+  nav.innerHTML = `<div class="tag" style="padding:2px 4px 6px">Misiones</div>${items}
+    <button class="mbtn ${S.cert!==null?'done':''}" data-i="${MISSIONS.length}" aria-current="${S.cur===MISSIONS.length}"><span class="n">${S.cert!==null?'✓':'★'}</span><span class="t">Certificación<small>${S.cert!==null?S.cert+' / '+CERT.length+' correctas':'métodos y dominios'}</small></span></button>
+    <div class="progress"><span>Estrellas</span><b>${total} / ${MISSIONS.length*3}</b></div>`;
+  nav.querySelectorAll('.mbtn').forEach(b=>b.onclick=()=>enter(+b.dataset.i));
+}
+
+let raf=null;
+function renderMain(){
+  cancelAnimationFrame(raf);
+  const main=document.getElementById('main');
+  if(S.cur>=MISSIONS.length) return renderCert(main);
+  const m=MISSIONS[S.cur];
+  const knobs = m.params.map(q=>`<div class="knob"><label for="k-${q.k}">${q.label}<output id="o-${q.k}">${fmt(S.p[q.k])}</output></label>
+     <input type="range" id="k-${q.k}" min="${q.min}" max="${q.max}" step="${q.step}" value="${S.p[q.k]}" ${S.solved?'disabled':''}></div>`).join('');
+  main.innerHTML = `<div class="mhead"><span class="chip">Misión ${S.cur+1} · ${m.tema}</span>${S.stars[m.id]?`<span class="stars">${'★'.repeat(S.stars[m.id])}</span>`:''}</div>
+    <h2>${m.titulo}</h2>
+    <p class="ctx">${m.ctx}</p>
+    <div class="task">${m.task}</div>
+    <div class="bench">
+      <div class="screen"><canvas id="cv" role="img" aria-label="Pantalla de la misión"></canvas><span class="status" id="status">ajustando…</span></div>
+      <div class="controls">
+        <div class="eq" id="eq">${m.eq(S.p)}</div>
+        ${knobs}
+        <div class="row">
+          ${S.solved?'':`<button class="btn amber" id="check">Verificar</button>
+          <button class="btn ghost" id="hint">${S.help===0?'Pista':S.help===1?'Otra pista':'Ver solución'}</button>`}
+        </div>
+        <div id="fb"></div>
+      </div>
+    </div>
+    <div id="after"></div>`;
+  m.params.forEach(q=>{ const el=document.getElementById('k-'+q.k); el.oninput=()=>{ S.p[q.k]=+el.value; document.getElementById('o-'+q.k).textContent=fmt(S.p[q.k]); document.getElementById('eq').innerHTML=m.eq(S.p); S.fb=null; renderFb(); draw(); }; });
+  const ck=document.getElementById('check'); if(ck) ck.onclick=check;
+  const ht=document.getElementById('hint'); if(ht) ht.onclick=hint;
+  renderFb(); renderAfter(); draw();
+}
+function draw(time=performance.now()){
+  const m=MISSIONS[S.cur]; const cv=document.getElementById('cv'); if(!cv||!m) return;
+  const P = cv._P && cv._v===m ? cv._P : (cv._P=makePlot(cv,m.view), cv._v=m, cv._P);
+  const ok = m.ok(S.p);
+  P.clear(); P.grid(m.grid[0],m.grid[1]); m.draw(P,S.p,S.solved,time);
+  const st=document.getElementById('status'); if(st){ st.textContent = S.solved?'máquina funcionando':'ajustando…'; st.classList.toggle('on',S.solved); }
+  if(m.anim && !matchMedia('(prefers-reduced-motion: reduce)').matches){ cancelAnimationFrame(raf); raf=requestAnimationFrame(draw); }
+}
+function renderFb(){
+  const el=document.getElementById('fb'); if(!el) return; const m=MISSIONS[S.cur];
+  let h='';
+  if(S.help>=1 && !S.solved) h+=`<div class="fb"><strong>Pistas</strong><ol>${m.hints.slice(0,Math.min(S.help,2)).map(x=>`<li>${x}</li>`).join('')}</ol></div>`;
+  if(S.help>=3 || S.solved) h+=`<div class="fb ok" style="margin-top:8px"><strong>${S.solved?'¡Máquina calibrada!':'Solución paso a paso'}</strong><ol>${m.sol.map(x=>`<li>${x}</li>`).join('')}</ol></div>`;
+  else if(S.fb==='bad') h+=`<div class="fb bad" style="margin-top:8px"><strong>Todavía no coincide</strong>Revisa la pantalla: ¿qué parámetro está más lejos? Puedes pedir una pista.</div>`;
+  el.innerHTML=h;
+}
+function check(){
+  const m=MISSIONS[S.cur];
+  if(m.ok(S.p)){ S.solved=true; const st = S.help===0?3:(S.help<3?2:1); S.stars[m.id]=Math.max(S.stars[m.id]||0,st); persist(); renderNav(); renderMain(); }
+  else { S.fb='bad'; renderFb(); }
+}
+function hint(){ S.help=Math.min(3,S.help+1); renderMain(); }
+function renderAfter(){
+  const el=document.getElementById('after'); if(!el||!S.solved) return; const m=MISSIONS[S.cur], q=m.q;
+  el.innerHTML = `<div class="quiz"><div class="tag">Pregunta de control</div><p class="q" style="margin:0;font-weight:600">${q.t}</p>
+    <div class="opts">${q.o.map((t,k)=>{let c=''; if(S.qDone){ if(k===q.a)c='ok'; else if(k===S.qPick)c='bad'; } return `<button class="opt ${c}" data-k="${k}" ${S.qDone?'disabled':''}>${t}</button>`;}).join('')}</div>
+    ${S.qDone?`<div class="fb ${S.qPick===q.a?'ok':'bad'}"><strong>${S.qPick===q.a?'Correcto':'La respuesta es: '+q.o[q.a]}</strong>${q.why}</div>
+    <div class="row"><button class="btn" id="next">${S.cur+1<MISSIONS.length?'Siguiente misión →':'Ir a la certificación →'}</button></div>`:''}</div>`;
+  el.querySelectorAll('.opt').forEach(b=>b.onclick=()=>{ S.qDone=true; S.qPick=+b.dataset.k; renderAfter(); });
+  const nx=document.getElementById('next'); if(nx){ nx.onclick=()=>enter(S.cur+1); nx.focus(); }
+}
+function renderCert(main){
+  if(S.certI>=CERT.length){
+    S.cert=Math.max(S.cert??0,S.certOk); persist(); renderNav();
+    const total=Object.values(S.stars).reduce((a,b)=>a+b,0);
+    main.innerHTML=`<div class="final"><div class="tag">Certificación completada</div><div class="big">${S.certOk} / ${CERT.length}</div>
+      <p style="margin:0">Estrellas de misiones: <b>${total} / ${MISSIONS.length*3}</b></p>
+      <p class="legend">${S.certOk===CERT.length?'Ingeniero certificado en ecuaciones trascendentales.':'Repasa las misiones donde obtuviste menos estrellas y vuelve a intentarlo.'}</p>
+      <div class="row"><button class="btn amber" id="again">Repetir certificación</button><button class="btn ghost" id="reset">Borrar mi progreso</button></div></div>`;
+    document.getElementById('again').onclick=()=>enter(MISSIONS.length);
+    document.getElementById('reset').onclick=()=>{ S.stars={}; S.cert=null; persist(); enter(0); };
+    return;
+  }
+  const q=CERT[S.certI], done=S.certPick!==null;
+  main.innerHTML=`<div class="mhead"><span class="chip">Certificación · ${S.certI+1} de ${CERT.length}</span><span class="legend">Aciertos: ${S.certOk}</span></div>
+    <h2>${q.t}</h2>
+    <div class="opts">${q.o.map((t,k)=>{let c=''; if(done){ if(k===q.a)c='ok'; else if(k===S.certPick)c='bad'; } return `<button class="opt ${c}" data-k="${k}" ${done?'disabled':''}>${t}</button>`;}).join('')}</div>
+    ${done?`<div class="fb ${S.certPick===q.a?'ok':'bad'}"><strong>${S.certPick===q.a?'Correcto':'Respuesta: '+q.o[q.a]}</strong>${q.why}</div><div class="row"><button class="btn" id="cn">Continuar →</button></div>`:''}`;
+  main.querySelectorAll('.opt').forEach(b=>b.onclick=()=>{ S.certPick=+b.dataset.k; if(S.certPick===q.a) S.certOk++; renderCert(main); });
+  const cn=document.getElementById('cn'); if(cn){ cn.onclick=()=>{ S.certI++; S.certPick=null; renderCert(main); }; cn.focus(); }
+}
+matchMedia('(prefers-color-scheme: dark)').addEventListener?.('change',()=>{ const cv=document.getElementById('cv'); if(cv) draw(); });
+
+function start(d){ if(d && d.S){ Object.assign(S,d.S); renderNav(); renderMain(); } else enter(0); }
+window.claude?.hot?.snapshot?.(()=>({S}));
+window.claude?.hot?.ready ? window.claude.hot.ready(start) : start(window.claude?.hot?.data ?? {});
+</script>
+
+</body>
+</html>
